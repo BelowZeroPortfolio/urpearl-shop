@@ -19,7 +19,7 @@ class InventoryService
     /**
      * Update inventory quantity for a product.
      */
-    public function updateStock(Product $product, int $quantity): bool
+    public function updateStock(Product $product, int $quantity, int $lowStockThreshold = null): bool
     {
         try {
             DB::beginTransaction();
@@ -28,10 +28,13 @@ class InventoryService
             if (!$inventory) {
                 $inventory = $product->inventory()->create([
                     'quantity' => $quantity,
-                    'low_stock_threshold' => 10, // Default threshold
+                    'low_stock_threshold' => $lowStockThreshold ?? 5, // Default threshold
                 ]);
             } else {
                 $inventory->quantity = $quantity;
+                if ($lowStockThreshold !== null) {
+                    $inventory->low_stock_threshold = $lowStockThreshold;
+                }
                 $inventory->save();
             }
 
@@ -163,16 +166,74 @@ class InventoryService
     public function getInventoryStats(): array
     {
         $totalProducts = Product::count();
-        $lowStockCount = $this->getLowStockProducts()->count();
-        $outOfStockCount = Product::whereHas('inventory', function ($query) {
-            $query->where('quantity', '<=', 0);
-        })->count();
+        
+        // Get all products with their inventory in a single query
+        $products = Product::with('inventory')->get();
+        
+        // Initialize counters
+        $outOfStockCount = 0;
+        $lowStockCount = 0;
+        $inStockCount = 0;
+        $noInventoryCount = 0;
+        $totalStockValue = 0;
+        $outOfStockProducts = [];
+        $lowStockProducts = [];
+        
+        foreach ($products as $product) {
+            if (!$product->inventory) {
+                $noInventoryCount++;
+                continue;
+            }
+            
+            $quantity = $product->inventory->quantity;
+            $threshold = $product->inventory->low_stock_threshold;
+            
+            // Calculate stock value (price * quantity) for in-stock items
+            if ($quantity > 0) {
+                $totalStockValue += $product->price * $quantity;
+            }
+            
+            if ($quantity <= 0) {
+                $outOfStockCount++;
+                $outOfStockProducts[] = [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'quantity' => $quantity
+                ];
+            } elseif ($quantity > 0 && $quantity <= $threshold) {
+                $lowStockCount++;
+                $lowStockProducts[] = [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'quantity' => $quantity,
+                    'threshold' => $threshold
+                ];
+            } else {
+                $inStockCount++;
+            }
+        }
+        
+        // Calculate inventory health percentage
+        $inventoryHealth = $totalProducts > 0 
+            ? round((($inStockCount + $lowStockCount * 0.5) / $totalProducts) * 100, 2)
+            : 100;
+            
+        // Ensure inventory health is between 0 and 100
+        $inventoryHealth = max(0, min(100, $inventoryHealth));
 
         return [
             'total_products' => $totalProducts,
+            'in_stock_count' => $inStockCount,
             'low_stock_count' => $lowStockCount,
             'out_of_stock_count' => $outOfStockCount,
-            'in_stock_count' => $totalProducts - $outOfStockCount,
+            'no_inventory_count' => $noInventoryCount,
+            'inventory_health' => $inventoryHealth,
+            'total_stock_value' => number_format($totalStockValue, 2),
+            'avg_stock_level' => $inStockCount > 0 
+                ? round($inStockCount / $totalProducts * 100, 2) 
+                : 0,
+            'out_of_stock_products' => $outOfStockProducts,
+            'low_stock_products' => $lowStockProducts,
         ];
     }
 

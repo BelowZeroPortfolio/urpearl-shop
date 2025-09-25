@@ -23,10 +23,6 @@ class AdminMiddleware
             return redirect()->route('home')->with('error', 'You do not have permission to access this page.');
         }
 
-        if (!auth()->user()->isAdmin()) {
-            abort(403, 'Access denied. Admin privileges required.');
-        }
-
         return $next($request);
     }
 }

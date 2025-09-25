@@ -17,6 +17,29 @@
     </div>
 
     <div class="card p-6">
+        <!-- Display validation errors -->
+        @if($errors->any())
+            <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium">There {{ $errors->count() > 1 ? 'are' : 'is' }} {{ $errors->count() }} {{ Str::plural('error', $errors->count()) }} with your submission:</h3>
+                        <div class="mt-2 text-sm text-red-700">
+                            <ul class="list-disc pl-5 space-y-1">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <form method="POST" action="{{ route('admin.products.update', $product) }}" enctype="multipart/form-data" class="space-y-6" id="product-edit-form">
             @csrf
             @method('PUT')
@@ -52,47 +75,49 @@
                 @enderror
             </div>
 
-            <!-- Price -->
-            <div class="w-full md:w-1/2">
-                <label for="price" class="block text-sm font-medium text-gray-700 mb-2">
-                    Price (₱) <span class="text-red-500">*</span>
-                </label>
-                <div class="relative">
-                    <span class="absolute left-3 top-2 text-gray-500">₱</span>
-                    <input type="number" 
-                           id="price" 
-                           name="price" 
-                           value="{{ old('price', $product->price) }}"
-                           step="0.01"
-                           min="0"
-                           class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500 @error('price') border-red-500 @enderror"
-                           placeholder="0.00" required>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Price -->
+                <div>
+                    <label for="price" class="block text-sm font-medium text-gray-700 mb-2">
+                        Price (₱) <span class="text-red-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-3 top-2 text-gray-500">₱</span>
+                        <input type="number" 
+                               id="price" 
+                               name="price" 
+                               value="{{ old('price', $product->price) }}"
+                               step="0.01"
+                               min="0"
+                               class="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500 @error('price') border-red-500 @enderror"
+                               placeholder="0.00" required>
+                    </div>
+                    @error('price')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
-                @error('price')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                @enderror
-            </div>
 
-            <!-- Size -->
-            <div class="w-full md:w-1/2">
-                <label for="size" class="block text-sm font-medium text-gray-700 mb-2">
-                    Size <span class="text-red-500">*</span>
-                </label>
-                <select id="size" 
-                        name="size" 
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500 @error('size') border-red-500 @enderror"
-                        required>
-                    <option value="">Select a size</option>
-                    <option value="XS" {{ old('size', $product->size) === 'XS' ? 'selected' : '' }}>XS - Extra Small</option>
-                    <option value="S" {{ old('size', $product->size) === 'S' ? 'selected' : '' }}>S - Small</option>
-                    <option value="M" {{ old('size', $product->size) === 'M' ? 'selected' : '' }}>M - Medium</option>
-                    <option value="L" {{ old('size', $product->size) === 'L' ? 'selected' : '' }}>L - Large</option>
-                    <option value="XL" {{ old('size', $product->size) === 'XL' ? 'selected' : '' }}>XL - Extra Large</option>
-                    <option value="XXL" {{ old('size', $product->size) === 'XXL' ? 'selected' : '' }}>XXL - Double Extra Large</option>
-                </select>
-                @error('size')
-                    <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                @enderror
+                <!-- Size -->
+                <div>
+                    <label for="size" class="block text-sm font-medium text-gray-700 mb-2">
+                        Size <span class="text-red-500">*</span>
+                    </label>
+                    <select id="size" 
+                            name="size" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-pink-500 focus:border-pink-500 @error('size') border-red-500 @enderror"
+                            required>
+                        <option value="">Select a size</option>
+                        <option value="XS" {{ old('size', $product->size) === 'XS' ? 'selected' : '' }}>XS - Extra Small</option>
+                        <option value="S" {{ old('size', $product->size) === 'S' ? 'selected' : '' }}>S - Small</option>
+                        <option value="M" {{ old('size', $product->size) === 'M' ? 'selected' : '' }}>M - Medium</option>
+                        <option value="L" {{ old('size', $product->size) === 'L' ? 'selected' : '' }}>L - Large</option>
+                        <option value="XL" {{ old('size', $product->size) === 'XL' ? 'selected' : '' }}>XL - Extra Large</option>
+                        <option value="XXL" {{ old('size', $product->size) === 'XXL' ? 'selected' : '' }}>XXL - Double Extra Large</option>
+                    </select>
+                    @error('size')
+                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
             </div>
 
             <!-- Category -->
@@ -148,6 +173,7 @@
                 </label>
                 <div class="space-y-3">
                     <div class="flex items-center">
+                        <!-- Hidden input to ensure unchecked checkbox sends 0 -->
                         <input type="hidden" name="is_new_arrival" value="0">
                         <input type="checkbox" 
                                id="is_new_arrival" 
@@ -162,6 +188,7 @@
                     </div>
                     
                     <div class="flex items-center">
+                        <!-- Hidden input to ensure unchecked checkbox sends 0 -->
                         <input type="hidden" name="is_best_seller" value="0">
                         <input type="checkbox" 
                                id="is_best_seller" 
@@ -281,215 +308,78 @@
 </div>
 
 <script>
-    // Function to toggle the new category input field
-    function toggleNewCategoryField(selectElement) {
-        const newCategoryContainer = document.getElementById('new-category-container');
-        const newCategoryInput = document.getElementById('new_category');
-        
-        if (selectElement.value === 'new') {
-            newCategoryContainer.classList.remove('hidden');
-            newCategoryInput.required = true;
-            // If this is a new category, clear any existing category selection
-            Array.from(selectElement.options).forEach(option => {
-                if (option.value !== 'new' && option.value !== '') {
-                    option.selected = false;
-                }
-            });
-        } else {
-            newCategoryContainer.classList.add('hidden');
-            newCategoryInput.required = false;
-            // Clear the new category input when selecting an existing category
-            if (newCategoryInput) {
-                newCategoryInput.value = '';
-            }
+// Function to toggle the new category input field
+function toggleNewCategoryField(selectElement) {
+    const newCategoryContainer = document.getElementById('new-category-container');
+    const newCategoryInput = document.getElementById('new_category');
+    
+    if (selectElement.value === 'new') {
+        newCategoryContainer.classList.remove('hidden');
+        newCategoryInput.required = true;
+    } else {
+        newCategoryContainer.classList.add('hidden');
+        newCategoryInput.required = false;
+        if (newCategoryInput) {
+            newCategoryInput.value = '';
         }
     }
+}
 
-    // Function to handle form submission
-    async function handleFormSubmit(e) {
-        e.preventDefault(); // Prevent the default form submission
+// Function to preview the selected image
+function previewImage(input) {
+    const preview = document.getElementById('image-preview');
+    const previewImg = document.getElementById('preview-img');
+    const file = input.files ? input.files[0] : null;
+    
+    if (file) {
+        // Check file size (20MB max)
+        const maxSize = 20 * 1024 * 1024; // 20MB in bytes
+        if (file.size > maxSize) {
+            alert('File size should not exceed 20MB');
+            input.value = '';
+            return;
+        }
         
-        const form = e.target;
-        const submitButton = form.querySelector('button[type="submit"]');
-        const originalButtonText = submitButton ? submitButton.innerHTML : '';
+        // Check file type
+        const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!validTypes.includes(file.type)) {
+            alert('Only JPG, PNG, GIF, and WebP files are allowed');
+            input.value = '';
+            return;
+        }
         
-        try {
-            console.log('Form submission started');
-            
-            // Show loading state
-            if (submitButton) {
-                submitButton.disabled = true;
-                submitButton.innerHTML = `
-                    <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Updating...
-                `;
-            }
-            
-            // Create FormData and add CSRF token
-            const formData = new FormData(form);
-            
-            // Handle category selection
-            const categorySelect = document.getElementById('category_id');
-            const newCategoryContainer = document.getElementById('new-category-container');
-            const newCategoryInput = document.getElementById('new_category');
-            
-            // If a new category is being created
-            if (categorySelect && categorySelect.value === 'new' && newCategoryInput && newCategoryInput.value.trim() !== '') {
-                // Only keep the new category input
-                formData.set('category_id', 'new');
-            } else if (categorySelect && categorySelect.value !== 'new') {
-                // Only keep the selected category ID and remove new_category if it exists
-                formData.delete('new_category');
-            }
-            
-            // Log form data for debugging
-            console.log('Form data to be submitted:', Object.fromEntries(formData.entries()));
-            
-            // Submit the form using fetch with the form's method and action
-            const response = await fetch(form.action, {
-                method: 'POST', // Laravel will handle the method spoofing
-                body: formData,
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'Accept': 'application/json'
-                },
-                credentials: 'same-origin'
-            });
-            
-            let data;
-            try {
-                data = await response.json();
-            } catch (e) {
-                console.error('Error parsing JSON response:', e);
-                throw new Error('Invalid response from server');
-            }
-            
-            if (response.ok) {
-                // Simply redirect to the products index
-                // The success message is already set in the session by the controller
-                const redirectUrl = data.redirect || '{{ route('admin.products.index') }}';
-                window.location.href = redirectUrl;
-            } else {
-                // Show validation errors or error message
-                let errorMessage = 'Failed to update product';
-                
-                if (data.errors) {
-                    errorMessage = Object.values(data.errors).flat().join('\n');
-                } else if (data.message) {
-                    errorMessage = data.message;
-                } else if (response.status === 422) {
-                    errorMessage = 'Validation error. Please check all fields and try again.';
-                }
-                
-                // Show error message to user
-                alert(errorMessage);
-                
-                // Re-enable the submit button
-                if (submitButton) {
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = originalButtonText;
-                }
-            }
-                
-            } catch (error) {
-                console.error('Error in form submission:', error);
-                
-                // Re-enable the submit button
-                if (submitButton) {
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = originalButtonText;
-                }
-                
-                // Show user-friendly error message
-                let errorMessage = 'An error occurred while updating the product. ';
-                
-                if (error.message) {
-                    errorMessage += error.message;
-                }
-                
-                if (error.response && error.response.status === 422) {
-                    errorMessage += 'Validation error. Please check all fields and try again.';
-                } else if (error.message.includes('500')) {
-                    errorMessage += 'Server error. Please try again later.';
-                } else if (error.message) {
-                    errorMessage = error.message;
-                }
-                
-                alert(errorMessage);
-                
-                // Reset button state
-                const submitButton = this.querySelector('button[type="submit"]');
-                if (submitButton) {
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = 'Update Product';
-                }
-            }
-        });
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            preview.classList.remove('hidden');
+        }
+        reader.readAsDataURL(file);
+    } else {
+        preview.classList.add('hidden');
     }
+}
 
-    // Function to preview the selected image
-    function previewImage(eventOrInput) {
-        // Handle both direct element and event object
-        const input = eventOrInput.target || eventOrInput;
-        const preview = document.getElementById('image-preview');
-        const previewImg = document.getElementById('preview-img');
-        const file = input.files ? input.files[0] : null;
-        
-        if (file) {
-            // Check file size (20MB max)
-            const maxSize = 20 * 1024 * 1024; // 20MB in bytes
-            if (file.size > maxSize) {
-                alert('File size should not exceed 20MB');
-                input.value = ''; // Clear the file input
-                return;
-            }
-            
-            // Check file type
-            const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-            if (!validTypes.includes(file.type)) {
-                alert('Only JPG, PNG, GIF, and WebP files are allowed');
-                input.value = ''; // Clear the file input
-                return;
-            }
-            
-            const reader = new FileReader();
-            
-            reader.onload = function(e) {
-                previewImg.src = e.target.result;
-                preview.classList.remove('hidden');
-            }
-            
-            reader.readAsDataURL(file);
-        } else {
-            previewImg.src = '#';
-            preview.classList.add('hidden');
-        }
+function removeImage() {
+    const input = document.getElementById('image');
+    const preview = document.getElementById('image-preview');
+    
+    input.value = '';
+    preview.classList.add('hidden');
+}
+
+// Initialize the form on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize category field state
+    const categorySelect = document.getElementById('category_id');
+    if (categorySelect) {
+        toggleNewCategoryField(categorySelect);
     }
+    
+    // Initialize drag and drop functionality
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('image');
 
-    // Initialize the form on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize form submission
-        const form = document.getElementById('product-edit-form');
-        if (form) {
-            form.addEventListener('submit', handleFormSubmit);
-        }
-        
-        // Initialize category field state
-        const categorySelect = document.getElementById('category_id');
-        if (categorySelect) {
-            toggleNewCategoryField(categorySelect);
-        }
-        const dropZone = document.getElementById('drop-zone');
-        const fileInput = document.getElementById('image');
-        const preview = document.getElementById('image-preview');
-        const previewImg = document.getElementById('preview-img');
-        const maxFileSize = 20 * 1024 * 1024; // 20MB
-        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-
+    if (dropZone && fileInput) {
         // Prevent default drag behaviors
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
             dropZone.addEventListener(eventName, preventDefaults, false);
@@ -522,7 +412,7 @@
         // Handle dropped files
         dropZone.addEventListener('drop', handleDrop, false);
 
-        // Handle click on drop zone - only if the click is on the drop zone itself, not the file input
+        // Handle click on drop zone
         dropZone.addEventListener('click', (e) => {
             if (e.target === dropZone || e.target.closest('.drop-zone-content')) {
                 fileInput.click();
@@ -534,82 +424,52 @@
             const files = dt.files;
             
             if (files.length) {
-                // Create a new DataTransfer object and add the file
                 const dataTransfer = new DataTransfer();
                 dataTransfer.items.add(files[0]);
                 fileInput.files = dataTransfer.files;
                 
-                // Create a new event to trigger the change
                 const event = new Event('change');
                 fileInput.dispatchEvent(event);
             }
         }
-
-        // Set up the file input change event
-        fileInput.addEventListener('change', function(e) {
-            previewImage(e);
-        });
-
-        function validateAndPreview(file) {
-            // Reset any previous errors
-            const existingError = document.querySelector('.file-error');
-            if (existingError) {
-                existingError.remove();
-            }
-
-            // Check file size (20MB max)
-            const maxSize = 20 * 1024 * 1024; // 20MB in bytes
-            if (file.size > maxSize) {
-                showError('File size should not exceed 20MB');
-                fileInput.value = ''; // Clear the file input
-                return;
-            }
-
-            // Check file type
-            if (!allowedTypes.includes(file.type)) {
-                showError('Invalid file type. Please upload an image (JPEG, PNG, GIF, or WebP).');
-                fileInput.value = ''; // Clear the file input
-                return;
-            }
-
-            // If validation passes, preview the image
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                previewImg.src = e.target.result;
-                preview.classList.remove('hidden');
-                
-                // Scroll to preview
-                preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-            reader.readAsDataURL(file);
-        }
-
-        function showError(message) {
-            // Remove any existing error messages
-            const existingError = document.querySelector('.file-error');
-            if (existingError) {
-                existingError.remove();
-            }
-
-            // Create and display new error message
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'mt-2 text-sm text-red-600 file-error';
-            errorDiv.textContent = message;
-            
-            // Insert after the drop zone
-            dropZone.parentNode.insertBefore(errorDiv, dropZone.nextSibling);
-            
-            // Clear the file input
-            fileInput.value = '';
-        }
-    });
-
-    function removeImage() {
-        const input = document.getElementById('image');
-        const preview = document.getElementById('image-preview');
-        
-        input.value = '';
-        preview.classList.add('hidden');
     }
+
+    // Handle form submission with loading state
+    const form = document.getElementById('product-edit-form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const categorySelect = document.querySelector('select[name="category_id"]');
+            const newCategoryInput = document.getElementById('new_category');
+            
+            // Validate new category if selected
+            if (categorySelect && categorySelect.value === 'new' && (!newCategoryInput || !newCategoryInput.value.trim())) {
+                e.preventDefault();
+                alert('Please enter a name for the new category');
+                newCategoryInput.focus();
+                return false;
+            }
+            
+            // Clear new category field if not selected
+            if (categorySelect && categorySelect.value !== 'new' && newCategoryInput) {
+                newCategoryInput.value = '';
+            }
+            
+            // Show loading state
+            const submitButton = form.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.innerHTML = `
+                    <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Updating...
+                `;
+            }
+            
+            return true;
+        });
+    }
+});
 </script>
 @endsection

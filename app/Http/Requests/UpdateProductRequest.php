@@ -12,6 +12,7 @@ class UpdateProductRequest extends FormRequest
      */
     public function authorize(): bool
     {
+        \Log::info('UpdateProductRequest - authorize() called');
         return $this->user() && $this->user()->can('manage-products');
     }
 
@@ -27,8 +28,10 @@ class UpdateProductRequest extends FormRequest
             'description' => 'required|string|min:10',
             'price' => 'required|numeric|min:0.01|max:999999.99',
             'size' => 'required|string|in:XS,S,M,L,XL,XXL',
+            'is_new_arrival' => 'boolean',
+            'is_best_seller' => 'boolean',
         ];
-
+        
         // Handle category validation
         if ($this->input('category_id') === 'new') {
             $rules['new_category'] = 'required|string|max:255|unique:categories,name';
@@ -53,6 +56,12 @@ class UpdateProductRequest extends FormRequest
         if (!$this->hasFile('image') && $this->input('image') === null) {
             $this->request->remove('image');
         }
+
+        // Handle checkbox values properly - convert string "1" to boolean true, everything else to false
+        $this->merge([
+            'is_new_arrival' => $this->input('is_new_arrival') === '1' || $this->input('is_new_arrival') === 1,
+            'is_best_seller' => $this->input('is_best_seller') === '1' || $this->input('is_best_seller') === 1,
+        ]);
     }
 
     /**

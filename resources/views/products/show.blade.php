@@ -119,8 +119,10 @@
                     @endif
                 </div>
 
-                <!-- SKU -->
-                <p class="text-sm text-gray-500">SKU: {{ $product->sku }}</p>
+                <!-- Size -->
+                @if($product->size)
+                    <p class="text-sm text-gray-500">Size: {{ $product->size }}</p>
+                @endif
             </div>
 
             <!-- Add to Cart Section -->

@@ -121,7 +121,9 @@
                         
                         <div class="flex-1">
                             <h3 class="font-semibold text-gray-900 text-lg">{{ $item->product->name }}</h3>
-                            <p class="text-gray-600">SKU: {{ $item->product->sku }}</p>
+                            @if($item->product->size)
+                            <p class="text-gray-600">Size: {{ $item->product->size }}</p>
+                            @endif
                             <p class="text-gray-600">{{ Str::limit($item->product->description, 100) }}</p>
                         </div>
                         

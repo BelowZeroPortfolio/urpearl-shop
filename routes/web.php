@@ -15,6 +15,7 @@ use App\Http\Controllers\RatingController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\NotificationController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\CheckoutController;
 
 
 /*
@@ -135,6 +136,7 @@ Route::prefix('admin')->middleware(['auth', 'admin'])->name('admin.')->group(fun
         Route::get('/inventory/{product}/edit', [InventoryController::class, 'edit'])->name('inventory.edit');
         Route::put('/inventory/{product}', [InventoryController::class, 'update'])->name('inventory.update');
         Route::post('/inventory/bulk-update', [InventoryController::class, 'bulkUpdate'])->name('inventory.bulk-update');
+        Route::post('/inventory/create-missing', [InventoryController::class, 'createMissingInventoryRecords'])->name('inventory.create-missing');
         Route::get('/inventory/low-stock', [InventoryController::class, 'lowStock'])->name('inventory.low-stock');
         Route::post('/inventory/{product}/adjust', [InventoryController::class, 'adjustStock'])->name('inventory.adjust');
         Route::get('/inventory/export', [InventoryController::class, 'export'])->name('inventory.export');

@@ -173,8 +173,10 @@
                     <tr>
                         <td>
                             <strong>{{ $item->product->name }}</strong>
-                            <br>
-                            <small style="color: #6b7280;">SKU: {{ $item->product->sku }}</small>
+                            @if($item->product->size)
+                                <br>
+                                <small style="color: #6b7280;">Size: {{ $item->product->size }}</small>
+                            @endif
                         </td>
                         <td>{{ $item->quantity }}</td>
                         <td>₱{{ number_format($item->price, 2) }}</td>

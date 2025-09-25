@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
@@ -29,6 +30,19 @@ class User extends Authenticatable
     ];
 
     /**
+     * Get the user's role.
+     */
+    public function getRoleAttribute($value)
+    {
+        \Log::info('Getting role', [
+            'user_id' => $this->id,
+            'role' => $value,
+            'attributes' => $this->attributes
+        ]);
+        return $value;
+    }
+
+    /**
      * The attributes that should be hidden for serialization.
      *
      * @var array<int, string>
@@ -45,7 +59,6 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'role' => UserRole::class,
     ];
 
     /**
@@ -53,16 +66,15 @@ class User extends Authenticatable
      */
     public function isAdmin(): bool
     {
-        return $this->role === UserRole::ADMIN->value || $this->role === UserRole::ADMIN;
+        return strtolower($this->role) === strtolower(UserRole::ADMIN->value);
     }
 
     /**
      * Check if the user is a buyer.
-     * 
      */
     public function isBuyer(): bool
     {
-        return $this->role === UserRole::BUYER->value || $this->role === UserRole::BUYER;
+        return strtolower($this->role) === strtolower(UserRole::BUYER->value);
     }
 
     /**
@@ -70,7 +82,8 @@ class User extends Authenticatable
      */
     public function makeAdmin(): self
     {
-        $this->update(['role' => UserRole::ADMIN->value]);
+        $this->role = UserRole::ADMIN->value;
+        $this->save();
         return $this;
     }
 
@@ -79,7 +92,8 @@ class User extends Authenticatable
      */
     public function makeBuyer(): self
     {
-        $this->update(['role' => UserRole::BUYER->value]);
+        $this->role = UserRole::BUYER->value;
+        $this->save();
         return $this;
     }
 

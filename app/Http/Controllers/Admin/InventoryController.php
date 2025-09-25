@@ -40,8 +40,11 @@ class InventoryController extends Controller
                     });
                     break;
                 case 'out_of_stock':
-                    $query->whereHas('inventory', function ($q) {
-                        $q->where('quantity', '<=', 0);
+                    // Include products without inventory records as out of stock
+                    $query->where(function ($q) {
+                        $q->whereHas('inventory', function ($subQ) {
+                            $subQ->where('quantity', '<=', 0);
+                        })->orWhereDoesntHave('inventory');
                     });
                     break;
                 case 'in_stock':
@@ -52,12 +55,12 @@ class InventoryController extends Controller
             }
         }
 
-        // Search by product name or SKU
+        // Search by product name or ID
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('sku', 'like', "%{$search}%");
+                    ->orWhere('id', 'like', "%{$search}%");
             });
         }
 
@@ -66,12 +69,12 @@ class InventoryController extends Controller
             switch ($request->sort) {
                 case 'quantity_asc':
                     $query->leftJoin('inventories', 'products.id', '=', 'inventories.product_id')
-                        ->orderBy('inventories.quantity', 'asc')
+                        ->orderByRaw('COALESCE(inventories.quantity, 0) ASC')
                         ->select('products.*');
                     break;
                 case 'quantity_desc':
                     $query->leftJoin('inventories', 'products.id', '=', 'inventories.product_id')
-                        ->orderBy('inventories.quantity', 'desc')
+                        ->orderByRaw('COALESCE(inventories.quantity, 0) DESC')
                         ->select('products.*');
                     break;
                 default:
@@ -82,6 +85,23 @@ class InventoryController extends Controller
         }
 
         $products = $query->paginate(20)->appends(request()->query());
+        
+        // Ensure all products have inventory records (fallback for any products that might not have them)
+        foreach ($products as $product) {
+            if (!$product->inventory) {
+                $product->inventory()->create([
+                    'quantity' => 0,
+                    'low_stock_threshold' => 5,
+                ]);
+                // Refresh the relationship
+                $product->load('inventory');
+                \Log::warning('Created missing inventory record for product', [
+                    'product_id' => $product->id,
+                    'product_name' => $product->name
+                ]);
+            }
+        }
+        
         $categories = Category::orderBy('name')->get();
         $stats = $this->inventoryService->getInventoryStats();
 
@@ -275,5 +295,36 @@ class InventoryController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Create missing inventory records for products that don't have them.
+     */
+    public function createMissingInventoryRecords()
+    {
+        $productsWithoutInventory = Product::doesntHave('inventory')->get();
+        $created = 0;
+
+        foreach ($productsWithoutInventory as $product) {
+            try {
+                $product->inventory()->create([
+                    'quantity' => 0,
+                    'low_stock_threshold' => 5,
+                ]);
+                $created++;
+            } catch (\Exception $e) {
+                \Log::error('Failed to create inventory for product', [
+                    'product_id' => $product->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Created {$created} inventory records for products that were missing them.",
+            'created_count' => $created,
+            'total_products_without_inventory' => $productsWithoutInventory->count()
+        ]);
     }
 }

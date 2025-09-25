@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class LoginController extends Controller
 {
@@ -33,6 +35,14 @@ class LoginController extends Controller
             $request->session()->regenerate();
 
             $user = Auth::user();
+            \Log::info('User logged in', [
+                'id' => $user->id,
+                'email' => $user->email,
+                'role' => $user->role,
+                'isAdmin()' => $user->isAdmin() ? 'true' : 'false',
+                'isBuyer()' => $user->isBuyer() ? 'true' : 'false'
+            ]);
+
             if ($user instanceof User && $user->isAdmin()) {
                 return redirect()->intended('/admin/dashboard');
             }

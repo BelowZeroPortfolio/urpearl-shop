@@ -1,13 +1,13 @@
 <div class="product-card group hover:shadow-lg transition-shadow duration-200 flex flex-col h-full bg-white rounded-lg overflow-hidden border border-gray-100">
     <a href="{{ route('products.show', $product->slug) }}" class="block flex-1 flex flex-col p-2 group relative">
         <!-- Product Badges -->
-        <div class="absolute top-2 left-2 z-10 flex items-start gap-1.5">
+        <div class="absolute top-2 left-2 z-50 flex items-start gap-1.5">
             @if($product->is_new_arrival)
                 <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-white text-pink-600 shadow-sm transform transition-all duration-200 group-hover:scale-105 group-hover:bg-pink-600 group-hover:text-white">
-                    <svg class="w-2.5 h-2.5 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M12.395 2.553a1 1 0 00-1.45-.385c-.345.23-.614.558-.822.88-.215.33-.396.68-.537 1.01a10.08 10.08 0 00-4.24.98 1 1 0 10.342 1.952 8.046 8.046 0 013.41-.78c.28.002.56.023.837.067.22.035.44.08.66.133a1 1 0 10.47-1.937c-.25-.06-.5-.1-.75-.14zM8.05 6.05a7.007 7.007 0 00-4.66 4.66 1 1 0 01-1.28 1.28 9.02 9.02 0 011.74-4.98 9.034 9.034 0 014.98-1.74 1 1 0 01.22 1.99c-.11.02-.22.03-.33.05zM6 13a1 1 0 100-2 1 1 0 000 2zm13-1a1 1 0 01-1.99 0c0-.11.01-.22.03-.33a1 1 0 011.96.33z" clip-rule="evenodd" />
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
                     </svg>
-                    New
+                    New Arrival
                 </span>
             @endif
             @if($product->is_best_seller)

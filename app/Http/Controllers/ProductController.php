@@ -217,7 +217,7 @@ class ProductController extends Controller
             ->withCount('ratings')
             ->withAvg('ratings', 'rating')
             ->where('is_best_seller', true)
-            ->orderBy('sold_count', 'desc');
+            ->orderBy('name', 'asc');
 
         // Handle search if present
         if ($request->filled('search')) {

@@ -59,10 +59,12 @@
                         <div>
                             <h3 class="text-lg font-semibold text-gray-900 mb-2">Basic Information</h3>
                             <dl class="space-y-2">
+                                @if($product->size)
                                 <div>
-                                    <dt class="text-sm font-medium text-gray-500">SKU</dt>
-                                    <dd class="text-sm text-gray-900">{{ $product->sku }}</dd>
+                                    <dt class="text-sm font-medium text-gray-500">Size</dt>
+                                    <dd class="text-sm text-gray-900">{{ $product->size }}</dd>
                                 </div>
+                                @endif
                                 <div>
                                     <dt class="text-sm font-medium text-gray-500">Category</dt>
                                     <dd class="text-sm text-gray-900">{{ $product->category->name ?? 'N/A' }}</dd>

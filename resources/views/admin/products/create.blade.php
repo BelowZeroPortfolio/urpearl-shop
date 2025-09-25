@@ -17,7 +17,30 @@
     </div>
 
     <div class="card p-6">
-        <form method="POST" action="{{ route('admin.products.store') }}" enctype="multipart/form-data" class="space-y-6">
+        <!-- Display validation errors -->
+        @if($errors->any())
+            <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium">There {{ $errors->count() > 1 ? 'are' : 'is' }} {{ $errors->count() }} {{ Str::plural('error', $errors->count()) }} with your submission:</h3>
+                        <div class="mt-2 text-sm text-red-700">
+                            <ul class="list-disc pl-5 space-y-1">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
+        <form method="POST" action="{{ route('admin.products.store') }}" enctype="multipart/form-data" class="space-y-6" id="productForm">
             @csrf
 
             <!-- Product Name -->
@@ -95,6 +118,7 @@
                 </div>
             </div>
 
+
             <!-- Category -->
             <div>
                 <label for="category_id" class="block text-sm font-medium text-gray-700 mb-2">
@@ -148,6 +172,7 @@
                 </label>
                 <div class="space-y-3">
                     <div class="flex items-center">
+                        <!-- Hidden input to ensure unchecked checkbox sends 0 -->
                         <input type="hidden" name="is_new_arrival" value="0">
                         <input type="checkbox" 
                                id="is_new_arrival" 
@@ -162,6 +187,7 @@
                     </div>
                     
                     <div class="flex items-center">
+                        <!-- Hidden input to ensure unchecked checkbox sends 0 -->
                         <input type="hidden" name="is_best_seller" value="0">
                         <input type="checkbox" 
                                id="is_best_seller" 
@@ -245,6 +271,47 @@
 </div>
 
 <script>
+// Handle form submission with validation
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('productForm');
+    
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const categorySelect = document.querySelector('select[name="category_id"]');
+            const newCategoryInput = document.getElementById('new_category');
+            
+            // If 'Others' is selected but no new category name is provided
+            if (categorySelect && categorySelect.value === 'new' && (!newCategoryInput || !newCategoryInput.value.trim())) {
+                e.preventDefault();
+                alert('Please enter a name for the new category');
+                newCategoryInput.focus();
+                return false;
+            }
+            
+            // If a regular category is selected, ensure new category field is cleared
+            if (categorySelect && categorySelect.value !== 'new' && newCategoryInput) {
+                newCategoryInput.value = '';
+            }
+            
+            // Show loading state
+            const submitButton = form.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.innerHTML = `
+                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Creating Product...
+                `;
+            }
+            
+            // Allow form to submit normally
+            return true;
+        });
+    }
+});
+
 // Function to toggle the new category input field
 function toggleNewCategoryField(selectElement) {
     const newCategoryContainer = document.getElementById('new-category-container');
@@ -255,18 +322,24 @@ function toggleNewCategoryField(selectElement) {
         newCategoryInput.required = true;
         // If this is a new category, clear any existing category selection
         Array.from(selectElement.options).forEach(option => {
-            if (option.value !== 'new' && option.value !== '') {
+            if (option.value !== 'new') {
                 option.selected = false;
+            } else {
+                option.selected = true;
             }
         });
     } else {
         newCategoryContainer.classList.add('hidden');
         newCategoryInput.required = false;
-        // Clear the new category input when selecting an existing category
-        if (newCategoryInput) {
-            newCategoryInput.value = '';
+        newCategoryInput.value = ''; // Clear the input when hiding
+        
+        // Make sure a category is selected
+        if (selectElement.value === '') {
+            selectElement.focus();
+            return false;
         }
     }
+    return true;
 }
 
 // DOM Elements
@@ -385,27 +458,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const categorySelect = document.getElementById('category_id');
     if (categorySelect) {
         toggleNewCategoryField(categorySelect);
-    }
-    const skuField = document.getElementById('sku');
-    if (!skuField.value) {
-        const nameField = document.getElementById('name');
-        const sku = nameField.value
-            .toUpperCase()
-            .replace(/[^A-Z0-9]/g, '')
-            .substring(0, 10);
-        skuField.value = sku;
-    }
-});
-
-// Auto-generate SKU from product name
-document.getElementById('name').addEventListener('input', function() {
-    const skuField = document.getElementById('sku');
-    if (!skuField.value) {
-        const sku = this.value
-            .toUpperCase()
-            .replace(/[^A-Z0-9]/g, '')
-            .substring(0, 10);
-        skuField.value = sku;
     }
 });
 </script>

@@ -41,17 +41,23 @@ class DashboardController extends AdminController
         // Total orders
         $totalOrders = Order::count();
         
-        // Total revenue (from paid orders)
-        $totalRevenue = Order::where('status', OrderStatus::PAID)
-            ->orWhere('status', OrderStatus::SHIPPED)
+        // Total revenue (from processing and shipped orders)
+        $totalRevenue = Order::whereIn('status', [
+                OrderStatus::PROCESSING->value,
+                OrderStatus::SHIPPED->value,
+                OrderStatus::DELIVERED->value
+            ])
             ->sum('total_amount');
         
         // Low stock count
         $lowStockCount = Inventory::whereRaw('quantity <= low_stock_threshold')->count();
         
         // Monthly revenue (current month)
-        $monthlyRevenue = Order::where('status', OrderStatus::PAID)
-            ->orWhere('status', OrderStatus::SHIPPED)
+        $monthlyRevenue = Order::whereIn('status', [
+                OrderStatus::PROCESSING->value,
+                OrderStatus::SHIPPED->value,
+                OrderStatus::DELIVERED->value
+            ])
             ->whereMonth('created_at', Carbon::now()->month)
             ->whereYear('created_at', Carbon::now()->year)
             ->sum('total_amount');
@@ -63,8 +69,11 @@ class DashboardController extends AdminController
         
         // Previous month data for comparison
         $previousMonth = Carbon::now()->subMonth();
-        $previousMonthRevenue = Order::where('status', OrderStatus::PAID)
-            ->orWhere('status', OrderStatus::SHIPPED)
+        $previousMonthRevenue = Order::whereIn('status', [
+                OrderStatus::PROCESSING->value,
+                OrderStatus::SHIPPED->value,
+                OrderStatus::DELIVERED->value
+            ])
             ->whereMonth('created_at', $previousMonth->month)
             ->whereYear('created_at', $previousMonth->year)
             ->sum('total_amount');

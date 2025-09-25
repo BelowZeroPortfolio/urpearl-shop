@@ -7,8 +7,10 @@ use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
 use App\Models\Product;
 use App\Models\Category;
+use App\Models\Inventory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class ProductController extends Controller
@@ -25,7 +27,7 @@ class ProductController extends Controller
             $search = $request->get('search');
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('sku', 'like', "%{$search}%")
+                  ->orWhere('id', 'like', "%{$search}%")
                   ->orWhere('description', 'like', "%{$search}%");
             });
         }
@@ -73,38 +75,92 @@ class ProductController extends Controller
      */
     public function store(StoreProductRequest $request)
     {
-        $validated = $request->validated();
+        \Log::info('=== START PRODUCT CREATION ===');
+        \Log::info('Request data:', $request->all());
+        
+        try {
+            \DB::beginTransaction();
+            $validated = $request->validated();
+            \Log::info('Validation passed:', $validated);
 
-        // Handle new category creation if 'Other' was selected
-        if ($request->category_id === 'new' && $request->filled('new_category')) {
-            $category = Category::create([
-                'name' => $request->new_category,
-                'slug' => Str::slug($request->new_category),
-                'description' => $request->new_category,
-                'is_active' => true
+            // Handle new category creation if 'Other' was selected
+            if ($request->category_id === 'new' && $request->filled('new_category')) {
+                \Log::info('Creating new category:', ['name' => $request->new_category]);
+                $category = Category::create([
+                    'name' => $request->new_category,
+                    'slug' => Str::slug($request->new_category),
+                    'description' => $request->new_category,
+                    'is_active' => true
+                ]);
+                $validated['category_id'] = $category->id;
+                \Log::info('New category created:', $category->toArray());
+            } else {
+                $validated['category_id'] = $request->category_id;
+                \Log::info('Using existing category ID:', ['category_id' => $request->category_id]);
+            }
+
+            // Handle image upload
+            if ($request->hasFile('image')) {
+                \Log::info('Processing image upload');
+                $image = $request->file('image');
+                $imageName = time() . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
+                $imagePath = $image->storeAs('products', $imageName, 'public');
+                $validated['image'] = $imagePath;
+                \Log::info('Image uploaded:', ['path' => $imagePath]);
+            }
+
+            // Generate slug if not provided
+            if (empty($validated['slug'])) {
+                $validated['slug'] = Str::slug($validated['name']);
+                \Log::info('Generated slug:', ['slug' => $validated['slug']]);
+            }
+
+            // Log the validated data before creating the product
+            \Log::info('Creating product with data:', [
+                'name' => $validated['name'],
+                'is_new_arrival' => $validated['is_new_arrival'] ?? false,
+                'is_best_seller' => $validated['is_best_seller'] ?? false,
+                'type_of_is_new_arrival' => gettype($validated['is_new_arrival'] ?? null),
+                'type_of_is_best_seller' => gettype($validated['is_best_seller'] ?? null)
             ]);
-            $validated['category_id'] = $category->id;
-        } else {
-            $validated['category_id'] = $request->category_id;
+            
+            // Create the product
+            $product = Product::create($validated);
+            \Log::info('Product created:', [
+                'id' => $product->id,
+                'name' => $product->name,
+                'is_new_arrival' => $product->is_new_arrival,
+                'is_best_seller' => $product->is_best_seller,
+                'type_of_is_new_arrival' => gettype($product->is_new_arrival),
+                'type_of_is_best_seller' => gettype($product->is_best_seller)
+            ]);
+
+            // Create an inventory record for the new product
+            $inventory = $product->inventory()->create([
+                'quantity' => 0, // Default to 0, can be updated later
+                'low_stock_threshold' => 5, // Default threshold, can be configured
+            ]);
+            \Log::info('Inventory record created successfully:', [
+                'inventory_id' => $inventory->id,
+                'product_id' => $product->id,
+                'quantity' => $inventory->quantity,
+                'threshold' => $inventory->low_stock_threshold
+            ]);
+
+            \DB::commit();
+            \Log::info('=== PRODUCT CREATION COMPLETED SUCCESSFULLY ===');
+            return redirect()->route('admin.products.index')
+                ->with('success', 'Product created successfully with inventory record.');
+                
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            \Log::error('Error creating product:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            \Log::info('=== PRODUCT CREATION FAILED ===');
+            return back()->withInput()->with('error', 'Failed to create product. Please try again.');
         }
-
-        // Handle image upload
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imageName = time() . '_' . Str::random(10) . '.' . $image->getClientOriginalExtension();
-            $imagePath = $image->storeAs('products', $imageName, 'public');
-            $validated['image'] = $imagePath;
-        }
-
-        // Generate slug if not provided
-        if (empty($validated['slug'])) {
-            $validated['slug'] = Str::slug($validated['name']);
-        }
-
-        $product = Product::create($validated);
-
-        return redirect()->route('admin.products.index')
-            ->with('success', 'Product created successfully.');
     }
 
     /**

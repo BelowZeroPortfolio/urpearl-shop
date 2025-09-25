@@ -127,8 +127,10 @@
                 <span class="stock-value threshold">{{ $threshold }} units</span>
             </div>
             <div class="stock-info">
-                <span class="stock-label">Product SKU:</span>
-                <span class="stock-value">{{ $product->sku }}</span>
+                @if($product->size)
+                <span class="stock-label">Product Size:</span>
+                <span class="stock-value">{{ $product->size }}</span>
+                @endif
             </div>
         </div>
 

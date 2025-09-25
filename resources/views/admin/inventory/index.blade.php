@@ -15,6 +15,10 @@
                     class="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-center">
                     Export CSV
                 </a>
+                <button onclick="createMissingInventoryRecords()"
+                    class="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors">
+                    Fix Missing Inventory
+                </button>
                 <button onclick="openBulkUpdateModal()"
                     class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
                     Bulk Update
@@ -93,7 +97,7 @@
                 <div>
                     <label for="search" class="block text-sm font-medium text-gray-700 mb-2">Search</label>
                     <input type="text" id="search" name="search" value="{{ request('search') }}"
-                        placeholder="Product name or SKU..."
+                        placeholder="Product name or ID..."
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent">
                 </div>
 
@@ -192,7 +196,7 @@
                                         @endif
                                         <div>
                                             <div class="text-sm font-medium text-gray-900">{{ $product->name }}</div>
-                                            <div class="text-sm text-gray-500">SKU: {{ $product->sku }}</div>
+                                            <div class="text-sm text-gray-500">ID: {{ $product->id }}</div>
                                         </div>
                                     </div>
                                 </td>
@@ -478,6 +482,34 @@
                         alert('An error occurred while adjusting stock.');
                     });
             });
+
+            // Function to create missing inventory records
+            function createMissingInventoryRecords() {
+                if (!confirm('This will create inventory records for products that don\'t have them. Continue?')) {
+                    return;
+                }
+
+                fetch('/admin/inventory/create-missing', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': @json(csrf_token())
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        location.reload();
+                    } else {
+                        alert('Error: ' + (data.message || 'Unknown error occurred'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while creating missing inventory records.');
+                });
+            }
 
         </script>
     @endpush

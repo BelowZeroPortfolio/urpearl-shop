@@ -15,21 +15,41 @@ class StoreProductRequest extends FormRequest
     }
 
     /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation()
+    {
+        // Handle checkbox values properly - convert string "1" to boolean true, everything else to false
+        $this->merge([
+            'is_new_arrival' => $this->input('is_new_arrival') === '1' || $this->input('is_new_arrival') === 1,
+            'is_best_seller' => $this->input('is_best_seller') === '1' || $this->input('is_best_seller') === 1,
+        ]);
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array|string>
      */
     public function rules(): array
     {
-        return [
+        $rules = [
             'name' => 'required|string|max:255',
             'description' => 'required|string|min:10',
             'price' => 'required|numeric|min:0.01|max:999999.99',
             'size' => 'required|string|in:XS,S,M,L,XL,XXL',
             'category_id' => 'required',
-            'new_category' => 'required_if:category_id,new|string|max:255|unique:categories,name',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:20480', // 20MB
+            'is_new_arrival' => 'boolean',
+            'is_best_seller' => 'boolean',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:20480', // 20MB
         ];
+
+        // Only add new_category validation if category_id is 'new'
+        if ($this->input('category_id') === 'new') {
+            $rules['new_category'] = 'required|string|max:255|unique:categories,name';
+        }
+
+        return $rules;
     }
 
     /**
@@ -51,6 +71,10 @@ class StoreProductRequest extends FormRequest
             'size.required' => 'Please select a size.',
             'size.in' => 'Please select a valid size (XS, S, M, L, XL, XXL).',
             'category_id.required' => 'Please select a category.',
+            'new_category.required' => 'Please enter a name for the new category.',
+            'new_category.string' => 'Category name must be text.',
+            'new_category.max' => 'Category name cannot exceed 255 characters.',
+            'new_category.unique' => 'This category already exists. Please select it from the dropdown.',
             'image.required' => 'Product image is required.',
             'image.image' => 'The file must be an image.',
             'image.mimes' => 'The image must be a file of type: jpeg, png, jpg, gif, or webp.',
@@ -67,6 +91,7 @@ class StoreProductRequest extends FormRequest
     {
         return [
             'category_id' => 'category',
+            'new_category' => 'new category',
             'sku' => 'SKU',
         ];
     }

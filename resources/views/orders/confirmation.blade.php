@@ -59,7 +59,9 @@
                             
                             <div class="flex-1">
                                 <h4 class="font-semibold text-gray-900">{{ $item->product->name }}</h4>
-                                <p class="text-sm text-gray-600">SKU: {{ $item->product->sku }}</p>
+                                @if($item->product->size)
+                                <p class="text-sm text-gray-500">Size: {{ $item->product->size }}</p>
+                                @endif
                                 <p class="text-sm text-gray-600">Quantity: {{ $item->quantity }}</p>
                             </div>
                             

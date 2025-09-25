@@ -134,15 +134,31 @@ class Product extends Model
      */
     public function getStockStatusAttribute(): string
     {
+        // Eager load the inventory relationship if not already loaded
+        if (!$this->relationLoaded('inventory')) {
+            $this->load('inventory');
+        }
+
+        // If no inventory record exists, create one with default values
         if (!$this->inventory) {
+            $this->inventory()->create([
+                'quantity' => 0,
+                'low_stock_threshold' => 5,
+            ]);
+            $this->load('inventory');
+        }
+
+        $quantity = (int)$this->inventory->quantity;
+        $threshold = (int)$this->inventory->low_stock_threshold;
+
+        // Ensure threshold is at least 1 to prevent division by zero
+        $threshold = max(1, $threshold);
+
+        if ($quantity <= 0) {
             return 'out_of_stock';
         }
 
-        if ($this->inventory->quantity <= 0) {
-            return 'out_of_stock';
-        }
-
-        if ($this->inventory->isLowStock()) {
+        if ($quantity <= $threshold) {
             return 'low_stock';
         }
 
